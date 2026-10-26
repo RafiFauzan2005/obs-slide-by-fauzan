@@ -8,7 +8,9 @@ let currentTransition = 'fade', transitionDuration = 300;
 async function load() {
   pdf = await pdfjsLib.getDocument({ url: `/current.pdf?t=${Date.now()}` }).promise;
   document.getElementById('empty')?.remove();
-  await render(slide, false);
+  const targetSlide = pending ? pending.n : slide;
+  pending = null;
+  await render(targetSlide, false);
 }
 
 async function render(n, animate = true) {
@@ -84,6 +86,7 @@ async function render(n, animate = true) {
 socket.on('presentation-loaded', async state => {
   if (state.transition) currentTransition = state.transition;
   if (state.duration) transitionDuration = state.duration;
+  if (state.slide) slide = state.slide;
   if (state.ready) {
     try {
       await load();

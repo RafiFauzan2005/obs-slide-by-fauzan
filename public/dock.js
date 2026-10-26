@@ -15,11 +15,11 @@ $('upload').addEventListener('click', async () => {
   await loadPdf(data.state.fileName); status('Presentasi siap ditampilkan');
  } catch (e) { status(e.message, true); } finally { button.disabled = false; }
 });
-async function loadPdf(name) {
+async function loadPdf(name, targetSlide = 1) {
  pdf = await pdfjsLib.getDocument({ url: `/current.pdf?t=${Date.now()}` }).promise;
- total = pdf.numPages; currentSlide = 1; fileName = name || 'Presentasi';
+ total = pdf.numPages; currentSlide = Math.max(1, Math.min(total, Number(targetSlide) || 1)); fileName = name || 'Presentasi';
  $('fileLabel').textContent = fileName; $('jumpNumber').max = total;
- await renderThumbs(); await showSlide(1);
+ await renderThumbs(); await showSlide(currentSlide);
  socket.emit('dock-ready', { total });
 }
 async function renderPage(pageNo, canvas, maxWidth) {
@@ -161,7 +161,7 @@ socket.on('presentation-loaded', async state => {
  updateDurationUi();
  if(state.ready && (!pdf || state.fileName!==fileName)) {
   try {
-   await loadPdf(state.fileName);
+   await loadPdf(state.fileName, state.slide || 1);
   } catch(e) {
    status('Tidak bisa membaca PDF hasil konversi: '+e.message,true);
   }
