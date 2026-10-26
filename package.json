@@ -1,0 +1,13 @@
+{
+  "name": "obs-presentation-dock",
+  "version": "1.0.0",
+  "description": "Local OBS Custom Dock for PDF and PowerPoint slide control",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1",
+    "pdfjs-dist": "^4.10.38"
+  }
+}
