@@ -449,20 +449,20 @@ button:disabled {
 
 <section class="panel">
   <div class="label">
-    <span>File Presentasi</span>
+    <span>Upload File</span>
   </div>
   <label class="upload">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 5v14M5 12h14"/>
     </svg>
-    Pilih PDF / PPT / PPTX
+    PDF / PPT / PPTX
     <input id="file" type="file" accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint">
   </label>
-  <div id="filename" class="filename">Belum ada file dipilih</div>
+  <div id="filename" class="filename">Belum ada file diupload</div>
   <div style="margin-top:8px">
-    <button id="upload" class="primary" style="width:100%">Upload &amp; Tampilkan</button>
+    <button id="upload" class="primary" style="width:100%">Upload</button>
   </div>
-  <div id="status" class="status" role="status" style="margin-top:6px">Menunggu file.</div>
+  <div id="status" class="status" role="status" style="margin-top:6px"></div>
 </section>
 
 <section class="panel">
@@ -484,7 +484,7 @@ button:disabled {
     <label class="anim-label" title="Gunakan animasi fade halus saat berpindah slide">
       <input id="animToggle" type="checkbox" checked>
       <span class="anim-switch"></span>
-      <span>Animasi Fade</span>
+      <span>Fade</span>
     </label>
     <div id="animDurationBox" class="anim-duration-box" title="Atur durasi transisi dalam milidetik (ms)">
       <input id="animDuration" type="number" min="50" max="3000" step="50" value="300" aria-label="Durasi transisi (ms)">
@@ -492,12 +492,12 @@ button:disabled {
     </div>
   </div>
   <div class="controls">
-    <button id="prev">← Previous</button>
-    <button id="next" class="primary">Next →</button>
+    <button id="prev">←</button>
+    <button id="next" class="primary">→</button>
   </div>
   <div class="jump">
     <input id="jumpNumber" type="number" min="1" value="1" aria-label="Nomor slide">
-    <button id="jump">Pergi ke Slide</button>
+    <button id="jump">Go</button>
   </div>
 </section>
 

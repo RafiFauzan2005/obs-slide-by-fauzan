@@ -19,8 +19,11 @@ PDF tidak memerlukan LibreOffice. File PowerPoint dikonversi ke PDF sehingga ani
 ## Instalasi
 1. Ekstrak folder proyek ke lokasi tetap, misalnya `C:\OBS-Presentation-Dock`.
 2. Install Node.js LTS dan LibreOffice. Setelah install, tutup/buka kembali terminal atau OBS bila perlu.
-3. Jalankan `START-WINDOWS.bat`. Pertama kali akan mengunduh dependency dengan `npm install`.
-4. Biarkan jendela server tetap terbuka. Dock berjalan di `http://127.0.0.1:3210/dock.html`.
+3. Menjalankan server:
+   - Mode Biasa (dengan jendela Command Prompt): Dobel-klik `START-WINDOWS.bat`.
+   - Mode Senyap (tanpa jendela terminal di taskbar): Dobel-klik `START-SILENT.vbs`.
+   - Untuk mematikan server yang berjalan di background: Dobel-klik `STOP-SERVER.bat`.
+4. Dock berjalan di `http://127.0.0.1:3210/dock.html`.
 5. Di OBS, buka **Docks → Custom Browser Docks** (nama menu bisa sedikit berbeda).
 6. Isi nama `Presentation Dock`, URL `http://127.0.0.1:3210/dock.html`, lalu klik Apply.
 7. Di scene yang ingin menampilkan slide, tambah **Sources → + → Browser**. Beri nama `Presentation Output`.

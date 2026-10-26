@@ -6,13 +6,13 @@ let pdf = null, currentSlide = 1, total = 0, fileName = '';
 const status = (msg, error=false) => { $('status').textContent = msg; $('status').style.color = error ? '#fca5a5' : ''; };
 $('file').addEventListener('change', () => { $('filename').textContent = $('file').files[0]?.name || 'Belum ada file dipilih'; });
 $('upload').addEventListener('click', async () => {
- const file = $('file').files[0]; if (!file) return status('Pilih file PDF/PPT/PPTX dulu.', true);
+ const file = $('file').files[0]; if (!file) return status('Pilih file PDF/PPT/PPTX dulu', true);
  const button = $('upload'); button.disabled = true; status('Mengunggah dan memproses file…');
  try {
   const form = new FormData(); form.append('presentation', file);
   const response = await fetch('/api/upload', { method:'POST', body:form });
   const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Upload gagal');
-  await loadPdf(data.state.fileName); status('Presentasi siap ditampilkan.');
+  await loadPdf(data.state.fileName); status('Presentasi siap ditampilkan');
  } catch (e) { status(e.message, true); } finally { button.disabled = false; }
 });
 async function loadPdf(name) {
