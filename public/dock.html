@@ -346,6 +346,103 @@ button:disabled {
   align-items: center;
   gap: 4px;
 }
+
+/* Animation option row */
+.anim-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 5px 8px;
+  background: #17181c;
+  border: 1px solid #23252b;
+  border-radius: 3px;
+}
+.anim-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--obs-text);
+  user-select: none;
+}
+.anim-label input {
+  display: none;
+}
+.anim-switch {
+  width: 28px;
+  height: 15px;
+  background: #2b2e35;
+  border: 1px solid #1a1b1e;
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.anim-switch::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 11px;
+  height: 11px;
+  background: #9097a3;
+  border-radius: 50%;
+  transition: transform 0.15s ease, background 0.15s;
+}
+.anim-label input:checked + .anim-switch {
+  background: var(--obs-blue);
+  border-color: var(--obs-blue-border);
+}
+.anim-label input:checked + .anim-switch::after {
+  transform: translateX(13px);
+  background: #ffffff;
+}
+.anim-duration-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--obs-input-bg);
+  border: 1px solid var(--obs-input-border);
+  border-top: 1px solid #23262d;
+  border-radius: 3px;
+  padding: 2px 6px;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+.anim-duration-box:focus-within {
+  border-color: var(--obs-blue);
+  box-shadow: 0 0 0 1px var(--obs-blue);
+}
+.anim-duration-box.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.anim-duration-box input {
+  width: 44px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  padding: 0;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.anim-duration-box input::-webkit-outer-spin-button,
+.anim-duration-box input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.anim-unit {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--obs-muted);
+  user-select: none;
+}
 </style>
 </head>
 <body>
@@ -382,6 +479,17 @@ button:disabled {
   </div>
   <div class="counter">
     <span id="slideLabel">Slide — / —</span>
+  </div>
+  <div class="anim-row">
+    <label class="anim-label" title="Gunakan animasi fade halus saat berpindah slide">
+      <input id="animToggle" type="checkbox" checked>
+      <span class="anim-switch"></span>
+      <span>Animasi Fade</span>
+    </label>
+    <div id="animDurationBox" class="anim-duration-box" title="Atur durasi transisi dalam milidetik (ms)">
+      <input id="animDuration" type="number" min="50" max="3000" step="50" value="300" aria-label="Durasi transisi (ms)">
+      <span class="anim-unit">ms</span>
+    </div>
   </div>
   <div class="controls">
     <button id="prev">← Previous</button>

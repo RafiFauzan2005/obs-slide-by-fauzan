@@ -40,19 +40,141 @@ async function renderThumbs() {
 async function showSlide(n) {
  if (!pdf) return;
  currentSlide = Math.max(1, Math.min(total, n));
- const old = $('preview').querySelector('canvas'); if (old) old.remove(); else $('preview').textContent='';
- const canvas = document.createElement('canvas'); $('preview').append(canvas);
- await renderPage(currentSlide,canvas,1200);
- $('slideLabel').textContent = `Slide ${currentSlide} / ${total}`; $('jumpNumber').value=currentSlide;
+ const preview = $('preview');
+ const oldCanvases = Array.from(preview.querySelectorAll('canvas'));
+ const canvas = document.createElement('canvas');
+ const useAnim = $('animToggle')?.checked ?? true;
+
+ if (useAnim && oldCanvases.length > 0) {
+  const dur = getDuration();
+  canvas.style.position = 'absolute';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.style.opacity = '0';
+  canvas.style.transition = `opacity ${dur}ms ease-in-out`;
+  canvas.style.zIndex = '2';
+  oldCanvases.forEach(c => { c.style.zIndex = '1'; });
+  preview.style.position = 'relative';
+  preview.append(canvas);
+  await renderPage(currentSlide, canvas, 1200);
+  requestAnimationFrame(() => {
+   requestAnimationFrame(() => {
+    canvas.style.opacity = '1';
+    setTimeout(() => {
+     oldCanvases.forEach(c => c.remove());
+    }, dur + 40);
+   });
+  });
+ } else {
+  oldCanvases.forEach(c => c.remove());
+  if (preview.firstChild && preview.firstChild.tagName !== 'CANVAS') {
+   preview.textContent = '';
+  }
+  preview.append(canvas);
+  await renderPage(currentSlide, canvas, 1200);
+ }
+
+ $('slideLabel').textContent = `Slide ${currentSlide} / ${total}`;
+ $('jumpNumber').value = currentSlide;
  [...$('thumbs').children].forEach((el,i)=>el.classList.toggle('active',i+1===currentSlide));
 }
 async function go(n) {
  if (!total) return;
  const target = Math.max(1,Math.min(total,Number(n)||1));
- try { const r=await fetch('/api/slide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slide:target})}); const d=await r.json(); if(!r.ok) throw new Error(d.error); currentSlide=d.state.slide; await showSlide(currentSlide); } catch(e) { status(e.message,true); }
+ const transition = $('animToggle')?.checked ? 'fade' : 'none';
+ const duration = getDuration();
+ try {
+  const r=await fetch('/api/slide',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({slide:target, transition, duration})
+  });
+  const d=await r.json();
+  if(!r.ok) throw new Error(d.error);
+  currentSlide=d.state.slide;
+  await showSlide(currentSlide);
+ } catch(e) {
+  status(e.message,true);
+ }
 }
-$('prev').addEventListener('click',()=>go(currentSlide-1)); $('next').addEventListener('click',()=>go(currentSlide+1));
-$('jump').addEventListener('click',()=>go($('jumpNumber').value)); $('jumpNumber').addEventListener('keydown',e=>{if(e.key==='Enter')go(e.target.value)});
-window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.key==='ArrowRight')go(currentSlide+1);if(e.key==='ArrowLeft')go(currentSlide-1)});
-socket.on('presentation-loaded', async state => { if(state.ready && (!pdf || state.fileName!==fileName)) { try { await loadPdf(state.fileName); } catch(e) { status('Tidak bisa membaca PDF hasil konversi: '+e.message,true); } } });
-socket.on('slide-changed', async state => { if(state.ready && state.slide && state.slide!==currentSlide && pdf) await showSlide(state.slide); });
+$('prev').addEventListener('click',()=>go(currentSlide-1));
+$('next').addEventListener('click',()=>go(currentSlide+1));
+$('jump').addEventListener('click',()=>go($('jumpNumber').value));
+$('jumpNumber').addEventListener('keydown',e=>{if(e.key==='Enter')go(e.target.value)});
+window.addEventListener('keydown',e=>{
+ if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;
+ if(e.key==='ArrowRight')go(currentSlide+1);
+ if(e.key==='ArrowLeft')go(currentSlide-1);
+});
+
+function getDuration() {
+ const val = Number($('animDuration')?.value);
+ return Math.max(50, Math.min(5000, Number.isFinite(val) && val > 0 ? val : 300));
+}
+
+function updateDurationUi() {
+ const isEnabled = $('animToggle')?.checked ?? true;
+ const box = $('animDurationBox');
+ if (box) box.classList.toggle('disabled', !isEnabled);
+}
+
+const savedAnim = localStorage.getItem('obs_slide_anim');
+if (savedAnim !== null && $('animToggle')) {
+ $('animToggle').checked = (savedAnim === 'fade');
+}
+const savedDur = localStorage.getItem('obs_slide_duration');
+if (savedDur && $('animDuration')) {
+ $('animDuration').value = Number(savedDur) || 300;
+}
+updateDurationUi();
+
+async function syncTransitionSettings() {
+ const transition = $('animToggle')?.checked ? 'fade' : 'none';
+ const duration = getDuration();
+ localStorage.setItem('obs_slide_anim', transition);
+ localStorage.setItem('obs_slide_duration', duration);
+ socket.emit('set-transition', { transition, duration });
+ try {
+  await fetch('/api/transition', {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ transition, duration })
+  });
+ } catch(err) {}
+}
+
+$('animToggle')?.addEventListener('change', () => {
+ updateDurationUi();
+ syncTransitionSettings();
+});
+
+$('animDuration')?.addEventListener('change', () => {
+ if ($('animDuration')) $('animDuration').value = getDuration();
+ syncTransitionSettings();
+});
+
+socket.on('presentation-loaded', async state => {
+ if (state.transition && $('animToggle')) $('animToggle').checked = (state.transition === 'fade');
+ if (state.duration && $('animDuration')) $('animDuration').value = state.duration;
+ updateDurationUi();
+ if(state.ready && (!pdf || state.fileName!==fileName)) {
+  try {
+   await loadPdf(state.fileName);
+  } catch(e) {
+   status('Tidak bisa membaca PDF hasil konversi: '+e.message,true);
+  }
+ }
+});
+socket.on('slide-changed', async state => {
+ if (state.transition && $('animToggle')) $('animToggle').checked = (state.transition === 'fade');
+ if (state.duration && $('animDuration')) $('animDuration').value = state.duration;
+ updateDurationUi();
+ if(state.ready && state.slide && state.slide!==currentSlide && pdf) await showSlide(state.slide);
+});
+socket.on('transition-changed', state => {
+ if (state.transition && $('animToggle')) $('animToggle').checked = (state.transition === 'fade');
+ if (state.duration && $('animDuration')) $('animDuration').value = state.duration;
+ updateDurationUi();
+});

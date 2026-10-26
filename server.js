@@ -20,7 +20,7 @@ const UPLOADS = path.join(ROOT, 'uploads');
 const CURRENT_PDF = path.join(UPLOADS, 'current.pdf');
 fs.mkdirSync(UPLOADS, { recursive: true });
 
-let state = { ready: false, fileName: '', total: 0, slide: 1, updatedAt: Date.now() };
+let state = { ready: false, fileName: '', total: 0, slide: 1, transition: 'fade', duration: 300, updatedAt: Date.now() };
 const upload = multer({
   dest: UPLOADS,
   limits: { fileSize: 250 * 1024 * 1024 },
@@ -69,7 +69,15 @@ app.post('/api/upload', upload.single('presentation'), async (req, res) => {
       fs.copyFileSync(path.join(tempDir, path.parse(safeName).name + '.pdf'), CURRENT_PDF);
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
-    state = { ready: true, fileName: safeName, total: 0, slide: 1, updatedAt: Date.now() };
+    state = {
+      ready: true,
+      fileName: safeName,
+      total: 0,
+      slide: 1,
+      transition: state.transition || 'fade',
+      duration: state.duration || 300,
+      updatedAt: Date.now()
+    };
     io.emit('presentation-loaded', state);
     res.json({ ok: true, state });
   } catch (e) {
@@ -79,11 +87,20 @@ app.post('/api/upload', upload.single('presentation'), async (req, res) => {
   }
 });
 
+app.post('/api/transition', (req, res) => {
+  if (req.body?.transition !== undefined) state.transition = req.body.transition;
+  if (req.body?.duration !== undefined) state.duration = Number(req.body.duration) || 300;
+  state.updatedAt = Date.now();
+  io.emit('transition-changed', state);
+  res.json({ ok: true, state });
+});
+
 app.post('/api/slide', (req, res) => {
   const slide = Number.parseInt(req.body?.slide, 10);
   if (!state.ready) return res.status(409).json({ error: 'Belum ada presentasi.' });
   if (!Number.isInteger(slide) || slide < 1) return res.status(400).json({ error: 'Nomor slide tidak valid.' });
   state.slide = state.total ? Math.min(slide, state.total) : slide;
+  if (req.body?.transition !== undefined) state.transition = req.body.transition;
   state.updatedAt = Date.now();
   io.emit('slide-changed', state);
   res.json({ ok: true, state });
@@ -92,6 +109,12 @@ app.post('/api/slide', (req, res) => {
 io.on('connection', socket => {
   socket.emit('presentation-loaded', state);
   socket.emit('slide-changed', state);
+  socket.on('set-transition', payload => {
+    if (payload?.transition !== undefined) state.transition = payload.transition;
+    if (payload?.duration !== undefined) state.duration = Number(payload.duration) || 300;
+    state.updatedAt = Date.now();
+    io.emit('transition-changed', state);
+  });
   socket.on('dock-ready', payload => {
     const total = Number.parseInt(payload?.total, 10);
     if (state.ready && Number.isInteger(total) && total > 0) {
